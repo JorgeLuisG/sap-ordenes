@@ -3,12 +3,15 @@ import pandas as pd
 import io
 import os
 from sqlalchemy import create_engine, text
-from dotenv import load_dotenv
-
-load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-engine = create_engine(DATABASE_URL)
+
+engine = create_engine(
+    DATABASE_URL,
+    pool_size=5,
+    max_overflow=0,
+    pool_pre_ping=True
+)
 
 app = FastAPI(title="Importador SAP")
 
@@ -33,7 +36,6 @@ async def importar_excel(file: UploadFile = File(...)):
     contents = await file.read()
     df = pd.read_excel(io.BytesIO(contents))
 
-    # Limpieza SAP
     df = df.rename(columns={
         "Orden": "orden",
         "Aviso": "aviso",
@@ -44,15 +46,9 @@ async def importar_excel(file: UploadFile = File(...)):
         "SumCosReal": "costo"
     })
 
-    df = df[[
-        "orden",
-        "aviso",
-        "fecha_inicio",
-        "texto_breve",
-        "autor",
-        "status_usuario",
-        "costo"
-    ]]
+    df = df[
+        ["orden", "aviso", "fecha_inicio", "texto_breve", "autor", "status_usuario", "costo"]
+    ]
 
     df["costo"] = (
         df["costo"]
@@ -64,6 +60,4 @@ async def importar_excel(file: UploadFile = File(...)):
 
     df.to_sql("ordenes_sap", engine, if_exists="append", index=False)
 
-    return {
-        "registros_insertados": len(df)
-    }
+    return {"registros_insertados": len(df)}
