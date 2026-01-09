@@ -1,25 +1,23 @@
 import os
 import socket
+# === FORZAR IPv4 ANTES DE CUALQUIER OTRA COSA ===
+if os.getenv("DISABLE_IPV6") == "1":
+    _orig_getaddrinfo = socket.getaddrinfo
+
+    def _ipv4_only_getaddrinfo(*args, **kwargs):
+        kwargs["family"] = socket.AF_INET
+        return _orig_getaddrinfo(*args, **kwargs)
+
+    socket.getaddrinfo = _ipv4_only_getaddrinfo
+# ===============================================
+
 from fastapi import FastAPI, UploadFile, File, HTTPException
 import pandas as pd
 import io
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
-print("DEBUG: DISABLE_IPV6 =", repr(os.getenv("DISABLE_IPV6")))
 
-
-
-# === FORZAR IPv4 PARA EVITAR PROBLEMAS EN RENDER + SUPABASE ===
-if os.getenv("DISABLE_IPV6") == "1":
-    _original_getaddrinfo = socket.getaddrinfo
-
-    def _ipv4_only_getaddrinfo(*args, **kwargs):
-        kwargs["family"] = socket.AF_INET
-        return _original_getaddrinfo(*args, **kwargs)
-
-    socket.getaddrinfo = _ipv4_only_getaddrinfo
-# =============================================================
 
 # Leer DATABASE_URL desde variables de entorno
 DATABASE_URL = os.getenv("DATABASE_URL")
