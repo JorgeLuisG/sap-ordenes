@@ -6,6 +6,10 @@ import io
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
+print("DEBUG: DISABLE_IPV6 =", repr(os.getenv("DISABLE_IPV6")))
+
+
+
 # === FORZAR IPv4 PARA EVITAR PROBLEMAS EN RENDER + SUPABASE ===
 if os.getenv("DISABLE_IPV6") == "1":
     _original_getaddrinfo = socket.getaddrinfo
